@@ -10,7 +10,9 @@ const INST_TYPE =
     CLARINET: 4,
     BASS_CLARINET: 5,
     FLUTE: 6,
-    OBOE: 7
+    OBOE: 7,
+    BASSOON: 8,
+    ALTOSAX: 9
 }
 
 function getAmplitudeFromDB(aDB)
@@ -79,6 +81,34 @@ const PARTIAL_PRESETS =
         getAmplitudeFromDB(-20.6),
         getAmplitudeFromDB(-32),
         getAmplitudeFromDB(-34),
+    ],
+    BASSOON: [
+        getAmplitudeFromDB(-18),
+        getAmplitudeFromDB(0),
+        getAmplitudeFromDB(-25),
+        getAmplitudeFromDB(-20),
+        getAmplitudeFromDB(-26.8),
+        getAmplitudeFromDB(-17.5),
+        getAmplitudeFromDB(-26),
+        getAmplitudeFromDB(-44.2),
+        getAmplitudeFromDB(-32),
+        getAmplitudeFromDB(-48.8),
+        getAmplitudeFromDB(-44.5),
+        getAmplitudeFromDB(-43.7),
+    ],
+    ALTOSAX: [
+        getAmplitudeFromDB(-2.3),
+        getAmplitudeFromDB(-3),
+        getAmplitudeFromDB(-20.8),
+        getAmplitudeFromDB(-14.5),
+        getAmplitudeFromDB(-15.8),
+        getAmplitudeFromDB(-22.2),
+        getAmplitudeFromDB(-26.8),
+        getAmplitudeFromDB(-22.4),
+        getAmplitudeFromDB(-26.6),
+        getAmplitudeFromDB(-23.8),
+        getAmplitudeFromDB(-27),
+        getAmplitudeFromDB(-26.4),
     ]
 }
 class Instrument
@@ -122,6 +152,14 @@ class Instrument
                 break;
             case INST_TYPE.OBOE:
                 partialAmplitudes = PARTIAL_PRESETS.OBOE;
+                break;
+            case INST_TYPE.BASSOON:
+                partialAmplitudes = PARTIAL_PRESETS.BASSOON;
+                octavePrefOffset = -1;
+                break;
+            case INST_TYPE.ALTOSAX:
+                partialAmplitudes = PARTIAL_PRESETS.ALTOSAX;
+                octavePrefOffset = -1;
                 break;
             // sine is the default type
             default:
@@ -223,6 +261,12 @@ function getUserSelectedInst()
             break;
         case 'bassclarinet':
             selectedInst = INST_TYPE.BASS_CLARINET;
+            break;
+        case 'bassoon':
+            selectedInst = INST_TYPE.BASSOON;
+            break;
+        case 'altosax':
+            selectedInst = INST_TYPE.ALTOSAX;
             break;
         default:
             selectedInst = INST_TYPE.SINE;
