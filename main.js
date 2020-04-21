@@ -1,5 +1,7 @@
 var AudioContext = window.AudioContext || window.webkitAudioContext;
 var audioCtx = new AudioContext();
+let globalAnalyser = audioCtx.createAnalyser();
+globalAnalyser.connect(audioCtx.destination);
 
 const INST_TYPE =
 {
@@ -13,7 +15,9 @@ const INST_TYPE =
     OBOE: 7,
     BASSOON: 8,
     ALTOSAX: 9,
-    TRUMPET: 10
+    TRUMPET: 10,
+    HORN: 11,
+    TROMBONE: 12
 }
 
 function getAmplitudeFromDB(aDB)
@@ -56,18 +60,18 @@ const PARTIAL_PRESETS =
         getAmplitudeFromDB(-28),
     ],
     FLUTE: [
-        getAmplitudeFromDB(-8.2),
-        getAmplitudeFromDB(-3.5),
         getAmplitudeFromDB(0),
-        getAmplitudeFromDB(-10.8),
-        getAmplitudeFromDB(-35.5),
-        getAmplitudeFromDB(-14.8),
-        getAmplitudeFromDB(-28.5),
-        getAmplitudeFromDB(-50),
-        getAmplitudeFromDB(-44.5),
+        getAmplitudeFromDB(-10.5),
+        getAmplitudeFromDB(-22.2),
+        getAmplitudeFromDB(-38.3),
         getAmplitudeFromDB(-36.5),
-        getAmplitudeFromDB(-39),
-        getAmplitudeFromDB(-45),
+        getAmplitudeFromDB(-46),
+        getAmplitudeFromDB(-42.8),
+        getAmplitudeFromDB(-55),
+        getAmplitudeFromDB(-50),
+        getAmplitudeFromDB(-54.5),
+        getAmplitudeFromDB(-63),
+        getAmplitudeFromDB(-59.2),
     ],
     OBOE: [
         getAmplitudeFromDB(-15.3),
@@ -124,7 +128,35 @@ const PARTIAL_PRESETS =
         getAmplitudeFromDB(-12.8),
         getAmplitudeFromDB(-14.5),
         getAmplitudeFromDB(-14.7),
-    ]
+    ],
+    HORN: [
+        getAmplitudeFromDB(-6.6),
+        getAmplitudeFromDB(0),
+        getAmplitudeFromDB(-3.6),
+        getAmplitudeFromDB(-10),
+        getAmplitudeFromDB(-12.6),
+        getAmplitudeFromDB(-18),
+        getAmplitudeFromDB(-19.4),
+        getAmplitudeFromDB(-20.7),
+        getAmplitudeFromDB(-19.4),
+        getAmplitudeFromDB(-22.1),
+        getAmplitudeFromDB(-26),
+        getAmplitudeFromDB(-32.6),
+    ],
+    TROMBONE: [
+        getAmplitudeFromDB(-6.4),
+        getAmplitudeFromDB(-2.69),
+        getAmplitudeFromDB(-1.6),
+        getAmplitudeFromDB(-1.69),
+        getAmplitudeFromDB(-3),
+        getAmplitudeFromDB(-1.69),
+        getAmplitudeFromDB(0),
+        getAmplitudeFromDB(-2.89),
+        getAmplitudeFromDB(-4.09),
+        getAmplitudeFromDB(-5.09),
+        getAmplitudeFromDB(-7.49),
+        getAmplitudeFromDB(-6.9),
+    ],
 }
 class Instrument
 {
@@ -164,6 +196,7 @@ class Instrument
                 break;
             case INST_TYPE.FLUTE:
                 partialAmplitudes = PARTIAL_PRESETS.FLUTE;
+                octavePrefOffset = 1;
                 break;
             case INST_TYPE.OBOE:
                 partialAmplitudes = PARTIAL_PRESETS.OBOE;
@@ -180,6 +213,14 @@ class Instrument
                 partialAmplitudes = PARTIAL_PRESETS.TRUMPET;
                 octavePrefOffset = -1;
                 break;
+            case INST_TYPE.HORN:
+                partialAmplitudes = PARTIAL_PRESETS.HORN;
+                octavePrefOffset = -1;
+                break;
+            case INST_TYPE.TROMBONE:
+                partialAmplitudes = PARTIAL_PRESETS.TROMBONE;
+                octavePrefOffset = -2;
+                break;
             // sine is the default type
             default:
             case INST_TYPE.SINE:
@@ -194,42 +235,47 @@ class Instrument
         this.partialGains = partialAmplitudes.map(() => audioCtx.createGain());
         this.masterGain = audioCtx.createGain();
 
-        partialAmplitudes.forEach((amp, index) => {
+        partialAmplitudes.forEach((amp, index) =>
+        {
             this.partialGains[index].gain.value = amp;
             this.partials[index].connect(this.partialGains[index]);
             this.partials[index].type = waveType;
             this.partialGains[index].connect(this.masterGain);
         });
         this.masterGain.gain.value = 1 / partialAmplitudes.length;
-
-        this.analyser = audioCtx.createAnalyser();
-        this.masterGain.connect(this.analyser);
     }
 
-    connect(dest) {
-        this.analyser.connect(dest);
+    connect(dest)
+    {
+        this.masterGain.connect(dest);
     }
 
-    disconnect() {
-        this.analyser.disconnect();
+    disconnect()
+    {
+        this.masterGain.disconnect();
     }
 
-    start(time = 0) {
+    start(time = 0)
+    {
         this.partials.forEach(o => o.start(time));
     }
 
-    stop(time = 0) {
+    stop(time = 0)
+    {
         this.partials.forEach(o => o.stop(time));
     }
 
     setFrequencyAtTime(frequency, time) {
-        this.partials.forEach((o, index) => {
+        this.partials.forEach((o, index) =>
+        {
             o.frequency.setValueAtTime(frequency * (index + 1), time);
         });
     }
 
-    exponentialRampToFrequencyAtTime(frequency, time) {
-        this.partials.forEach((o, index) => {
+    exponentialRampToFrequencyAtTime(frequency, time)
+    {
+        this.partials.forEach((o, index) =>
+        {
             o.frequency.exponentialRampToValueAtTime(frequency * (index + 1), time);
         });
     }
@@ -290,6 +336,12 @@ function getUserSelectedInst()
         case 'trumpet':
             selectedInst = INST_TYPE.TRUMPET;
             break;
+        case 'horn':
+            selectedInst = INST_TYPE.HORN;
+            break;
+        case 'trombone':
+            selectedInst = INST_TYPE.TROMBONE;
+            break;
         default:
             selectedInst = INST_TYPE.SINE;
             break;
@@ -327,7 +379,7 @@ function playDrone(aInst)
     let t = audioCtx.currentTime;
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset) * A4, t)
 
-    aInst.connect(audioCtx.destination);
+    aInst.connect(globalAnalyser);
     aInst.start();
     aInst.stop(t + 3);
 }
@@ -352,7 +404,7 @@ function playScale(aInst)
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * B3, t + 3.75);
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * A3, t + 4);
 
-    aInst.connect(audioCtx.destination);
+    aInst.connect(globalAnalyser);
     aInst.start();
     aInst.stop(audioCtx.currentTime + 4.5);
 }
@@ -370,7 +422,7 @@ function playLick(aInst)
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * C4, t + 1.5);
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * D4, t + 1.85);
 
-    aInst.connect(audioCtx.destination);
+    aInst.connect(globalAnalyser);
     aInst.start();
     aInst.stop(audioCtx.currentTime + 2.25);
 }
@@ -380,14 +432,14 @@ var canvas = document.getElementById("oscilloscope");
 var canvasCtx = canvas.getContext("2d");
 
 // draw an oscilloscope of the current audio source
-
-function draw() {
+function draw()
+{
     requestAnimationFrame(draw);
 
-    theInstrument.analyser.fftSize = 2048;
-    var bufferLength = theInstrument.analyser.frequencyBinCount;
+    globalAnalyser.fftSize = 2048;
+    var bufferLength = globalAnalyser.frequencyBinCount;
     var dataArray = new Uint8Array(bufferLength);
-    theInstrument.analyser.getByteTimeDomainData(dataArray);
+    globalAnalyser.getByteTimeDomainData(dataArray);
 
     canvasCtx.fillStyle = "#f8f9fa";
     canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
