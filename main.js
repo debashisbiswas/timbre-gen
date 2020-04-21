@@ -1,4 +1,5 @@
-let audioCtx = new AudioContext();
+var AudioContext = window.AudioContext || window.webkitAudioContext;
+var audioCtx = new AudioContext();
 
 const INST_TYPE =
 {
@@ -73,7 +74,12 @@ class Instrument
      */
     constructor(aInstType)
     {
-        let waveType, partialAmplitudes;
+        // waveType specifies the type used by the oscillator (sine, square, triangle, sawtooth)
+        // partialAmplitudes is an array where each elem is the gain of the overtone at that index
+        // octavePrefOffset is the preferred octave that the demos should be played, relative to 4 (treating 4 as middle)
+        let waveType = 'sine';
+        let partialAmplitudes = PARTIAL_PRESETS.SINE;
+        let octavePrefOffset = 0;
         switch(aInstType)
         {
             case INST_TYPE.SQUARE:
@@ -90,6 +96,7 @@ class Instrument
                 break;
             case INST_TYPE.CLARINET:
                 partialAmplitudes = PARTIAL_PRESETS.CLARINET;
+                octavePrefOffset = -1;
                 break;
             case INST_TYPE.FLUTE:
                 partialAmplitudes = PARTIAL_PRESETS.FLUTE;
@@ -102,9 +109,11 @@ class Instrument
             case INST_TYPE.SINE:
                 waveType = 'sine';
                 partialAmplitudes = PARTIAL_PRESETS.SINE;
+                octavePrefOffset = 0;
                 break;
         }
 
+        this.octaveOffset = octavePrefOffset;
         this.partials = partialAmplitudes.map(() => audioCtx.createOscillator());
         this.partialGains = partialAmplitudes.map(() => audioCtx.createGain());
         this.masterGain = audioCtx.createGain();
@@ -228,7 +237,7 @@ function clickDrone()
 function playDrone(aInst)
 {
     let t = audioCtx.currentTime;
-    aInst.setFrequencyAtTime(A3, t)
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset) * A4, t)
 
     aInst.connect(audioCtx.destination);
     aInst.start();
@@ -238,22 +247,22 @@ function playDrone(aInst)
 function playScale(aInst)
 {
     let t = audioCtx.currentTime;
-    aInst.setFrequencyAtTime(2 * A3, t);
-    aInst.setFrequencyAtTime(2 * B3, t + 0.5);
-    aInst.setFrequencyAtTime(2 * Db4, t + 0.75);
-    aInst.setFrequencyAtTime(2 * D4, t + 1);
-    aInst.setFrequencyAtTime(2 * E4, t + 1.25);
-    aInst.setFrequencyAtTime(2 * Gb4, t + 1.5);
-    aInst.setFrequencyAtTime(2 * Ab4, t + 1.75);
-    aInst.setFrequencyAtTime(2 * A4, t + 2);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * A3, t);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * B3, t + 0.5);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * Db4, t + 0.75);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * D4, t + 1);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * E4, t + 1.25);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * Gb4, t + 1.5);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * Ab4, t + 1.75);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * A4, t + 2);
 
-    aInst.setFrequencyAtTime(2 * Ab4, t + 2.5);
-    aInst.setFrequencyAtTime(2 * Gb4, t + 2.75);
-    aInst.setFrequencyAtTime(2 * E4, t + 3);
-    aInst.setFrequencyAtTime(2 * D4, t + 3.25);
-    aInst.setFrequencyAtTime(2 * Db4, t + 3.5);
-    aInst.setFrequencyAtTime(2 * B3, t + 3.75);
-    aInst.setFrequencyAtTime(2 * A3, t + 4);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * Ab4, t + 2.5);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * Gb4, t + 2.75);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * E4, t + 3);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * D4, t + 3.25);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * Db4, t + 3.5);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * B3, t + 3.75);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * A3, t + 4);
 
     aInst.connect(audioCtx.destination);
     aInst.start();
@@ -263,15 +272,15 @@ function playScale(aInst)
 function playLick(aInst)
 {
     let t = audioCtx.currentTime;
-    aInst.setFrequencyAtTime(D4, t);
-    aInst.setFrequencyAtTime(E4, t + 0.35);
-    aInst.setFrequencyAtTime(F4, t + 0.5);
-    aInst.setFrequencyAtTime(G4, t + 0.85);
-    aInst.setFrequencyAtTime(D4, t + 1);
-    aInst.exponentialRampToFrequencyAtTime(E4, t + 1.35);
-    aInst.setFrequencyAtTime(E4, t + 1.35);
-    aInst.setFrequencyAtTime(C4, t + 1.5);
-    aInst.setFrequencyAtTime(D4, t + 1.85);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * D4, t);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * E4, t + 0.35);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * F4, t + 0.5);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * G4, t + 0.85);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * D4, t + 1);
+    aInst.exponentialRampToFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * E4, t + 1.35);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * E4, t + 1.35);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * C4, t + 1.5);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * D4, t + 1.85);
 
     aInst.connect(audioCtx.destination);
     aInst.start();
