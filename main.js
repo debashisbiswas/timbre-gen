@@ -2,121 +2,323 @@ let audioCtx = new AudioContext();
 
 const INST_TYPE =
 {
-    SINE: 'sine',
-    CLARINET: 'clarinet',
-    FLUTE: 'flute'
+    SINE: 0,
+    SQUARE: 1,
+    TRIANGLE: 2,
+    SAWTOOTH: 3,
+    CLARINET: 4,
+    FLUTE: 5,
+    OBOE: 6
 }
 
-function buildPartial(aFreq, aNum, aGain)
+function getAmplitudeFromDB(aDB)
 {
-    // calculate frequency of partial
-    // aNum is the partial, where 1 is the fundamental, 2 is the first overtone, etc.
-    let partialFrequency = aNum * aFreq;
-    resultObject =
-    {
-        frequency: partialFrequency,
-        gain: aGain
-    };
-
-    return resultObject;
+    return Math.pow(10, aDB / 20);
 }
 
+const PARTIAL_PRESETS =
+{
+    SINE: [0.5],
+    SQUARE: [0.1],
+    TRIANGLE: [0.7],
+    SAWTOOTH: [0.15],
+    CLARINET: [
+        getAmplitudeFromDB(0),
+        getAmplitudeFromDB(-36),
+        getAmplitudeFromDB(-3.2),
+        getAmplitudeFromDB(-33),
+        getAmplitudeFromDB(-5),
+        getAmplitudeFromDB(-28),
+        getAmplitudeFromDB(-17),
+        getAmplitudeFromDB(-18.5),
+        getAmplitudeFromDB(-26.6),
+        getAmplitudeFromDB(-32.4),
+        getAmplitudeFromDB(-26.2),
+        getAmplitudeFromDB(-28),
+    ],
+    FLUTE: [
+        getAmplitudeFromDB(-8.2),
+        getAmplitudeFromDB(-3.5),
+        getAmplitudeFromDB(0),
+        getAmplitudeFromDB(-10.8),
+        getAmplitudeFromDB(-35.5),
+        getAmplitudeFromDB(-14.8),
+        getAmplitudeFromDB(-28.5),
+        getAmplitudeFromDB(-50),
+        getAmplitudeFromDB(-44.5),
+        getAmplitudeFromDB(-36.5),
+        getAmplitudeFromDB(-39),
+        getAmplitudeFromDB(-45),
+    ],
+    OBOE: [
+        getAmplitudeFromDB(-15.3),
+        getAmplitudeFromDB(-10),
+        getAmplitudeFromDB(0),
+        getAmplitudeFromDB(-10.4),
+        getAmplitudeFromDB(-30.6),
+        getAmplitudeFromDB(-23),
+        getAmplitudeFromDB(-22.5),
+        getAmplitudeFromDB(-23),
+        getAmplitudeFromDB(-24),
+        getAmplitudeFromDB(-20.6),
+        getAmplitudeFromDB(-32),
+        getAmplitudeFromDB(-34),
+    ]
+}
 class Instrument
 {
-    constructor(aType, aFreq = 440)
+    /**
+     * Given an array of overtone amplitudes, construct an additive
+     * synth for that overtone structure
+     */
+    constructor(aInstType)
     {
-        this.type = aType;
-        this.frequency = aFreq;
-        this.playing = false;
-        switch(aType)
+        let waveType, partialAmplitudes;
+        switch(aInstType)
         {
-            case INST_TYPE.FLUTE:
-                this.partialTable =
-                [
-                    buildPartial(this.frequency, 1, 1),
-                    buildPartial(this.frequency, 2, 0.1),
-                    buildPartial(this.frequency, 3, 1),
-                    buildPartial(this.frequency, 4, 0.3),
-                    buildPartial(this.frequency, 5, 0.2),
-                    buildPartial(this.frequency, 6, 0.15),
-                    buildPartial(this.frequency, 7, 0.1)
-                ];
+            case INST_TYPE.SQUARE:
+                waveType = 'square';
+                partialAmplitudes = PARTIAL_PRESETS.SQUARE;
+                break;
+            case INST_TYPE.TRIANGLE:
+                waveType = 'triangle';
+                partialAmplitudes = PARTIAL_PRESETS.TRIANGLE;
+                break;
+            case INST_TYPE.SAWTOOTH:
+                waveType = 'sawtooth';
+                partialAmplitudes = PARTIAL_PRESETS.SAWTOOTH;
                 break;
             case INST_TYPE.CLARINET:
-                this.partialTable = 
-                [
-                    buildPartial(this.frequency, 1, 1),
-                    buildPartial(this.frequency, 3, 0.14),
-                    buildPartial(this.frequency, 5, 0.11),
-                    buildPartial(this.frequency, 7, 0.11),
-                    buildPartial(this.frequency, 9, 0.1),
-                    buildPartial(this.frequency, 11, 0.07),
-                    buildPartial(this.frequency, 13, 0.06)
-                ];
+                partialAmplitudes = PARTIAL_PRESETS.CLARINET;
                 break;
-            case INST_TYPE.SINE:
+            case INST_TYPE.FLUTE:
+                partialAmplitudes = PARTIAL_PRESETS.FLUTE;
+                break;
+            case INST_TYPE.OBOE:
+                partialAmplitudes = PARTIAL_PRESETS.OBOE;
+                break;
+            // sine is the default type
             default:
-                this.partialTable =
-                [
-                    buildPartial(this.frequency, 1, 1)
-                ];
+            case INST_TYPE.SINE:
+                waveType = 'sine';
+                partialAmplitudes = PARTIAL_PRESETS.SINE;
                 break;
         }
 
-        this.refreshPartials();
-    }
-
-    refreshPartials()
-    {
-        this.partials = this.partialTable.map(() => audioCtx.createOscillator());
-        this.partialGains = this.partialTable.map(() => audioCtx.createGain());
+        this.partials = partialAmplitudes.map(() => audioCtx.createOscillator());
+        this.partialGains = partialAmplitudes.map(() => audioCtx.createGain());
         this.masterGain = audioCtx.createGain();
 
-        this.partialTable.forEach((partialData, index) =>
-        {
-            this.partials[index].frequency.value = partialData.frequency;
-            this.partialGains[index].gain.value = partialData.gain;
+        partialAmplitudes.forEach((amp, index) => {
+            this.partialGains[index].gain.value = amp;
             this.partials[index].connect(this.partialGains[index]);
+            this.partials[index].type = waveType;
             this.partialGains[index].connect(this.masterGain);
         });
-        this.masterGain.value = (1 / this.partialTable.length);
+        this.masterGain.gain.value = 1 / partialAmplitudes.length;
+
+        this.analyser = audioCtx.createAnalyser();
+        this.masterGain.connect(this.analyser);
     }
 
-    connect(dest)
-    {
-        this.masterGain.connect(dest);
-        this.playing = true;
+    connect(dest) {
+        this.analyser.connect(dest);
     }
 
-    disconnect()
-    {
-        this.masterGain.disconnect();
-        this.playing = false;
+    disconnect() {
+        this.analyser.disconnect();
     }
 
-    start(time = 0)
-    {
+    start(time = 0) {
         this.partials.forEach(o => o.start(time));
     }
 
-    stop(time = 0)
-    {
+    stop(time = 0) {
         this.partials.forEach(o => o.stop(time));
     }
+
+    setFrequencyAtTime(frequency, time) {
+        this.partials.forEach((o, index) => {
+            o.frequency.setValueAtTime(frequency * (index + 1), time);
+        });
+    }
+
+    exponentialRampToFrequencyAtTime(frequency, time) {
+        this.partials.forEach((o, index) => {
+            o.frequency.exponentialRampToValueAtTime(frequency * (index + 1), time);
+        });
+    }
 }
 
-// ---------- EVENT HANDLERS ----------
+let theInstrument = new Instrument();
 
-let inst = new Instrument(INST_TYPE.CLARINET, 220);
-inst.start();
-function handleButtonClick()
+const A4 = 440;
+
+const Ab4 = A4 * Math.pow(2, -1 / 12);
+const G4 = A4 * Math.pow(2, -2 / 12);
+const Gb4 = A4 * Math.pow(2, -3 / 12);
+const F4 = A4 * Math.pow(2, -4 / 12);
+const E4 = A4 * Math.pow(2, -5 / 12);
+const Eb4 = A4 * Math.pow(2, -6 / 12);
+const D4 = A4 * Math.pow(2, -7 / 12);
+const Db4 = A4 * Math.pow(2, -8 / 12);
+const C4 = A4 * Math.pow(2, -9 / 12);
+const B3 = A4 * Math.pow(2, -10 / 12);
+const Bb3 = A4 * Math.pow(2, -11 / 12);
+const A3 = A4 * Math.pow(2, -12 / 12);
+
+function getUserSelectedInst()
 {
-    if(!inst.playing)
+    let selectedInst = INST_TYPE.SINE;
+    switch($('#selectInst')[0].value.toLowerCase())
     {
-        inst.connect(audioCtx.destination);
+        case 'sine':
+            selectedInst = INST_TYPE.SINE;
+            break;
+        case 'square':
+            selectedInst = INST_TYPE.SQUARE;
+            break;
+        case 'triangle':
+            selectedInst = INST_TYPE.TRIANGLE;
+            break;
+        case 'sawtooth':
+            selectedInst = INST_TYPE.SAWTOOTH;
+            break;
+        case 'flute':
+            selectedInst = INST_TYPE.FLUTE;
+            break;
+        case 'clarinet':
+            selectedInst = INST_TYPE.CLARINET;
+            break;
+        case 'oboe':
+            selectedInst = INST_TYPE.OBOE;
+            break;
+        default:
+            selectedInst = INST_TYPE.SINE;
+            break;
     }
-    else
-    {
-        inst.disconnect(audioCtx.destination);
-    }
+
+    return selectedInst;
 }
+
+function clickLick()
+{
+    theInstrument = new Instrument(getUserSelectedInst());
+    // let instrument = new Instrument(getUserSelectedInst());
+
+    playLick(theInstrument);
+}
+
+function clickScale()
+{
+    theInstrument = new Instrument(getUserSelectedInst());
+    // let instrument = new Instrument(getUserSelectedInst());
+
+    playScale(theInstrument);
+}
+
+function clickDrone()
+{
+    theInstrument = new Instrument(getUserSelectedInst());
+    // let instrument = new Instrument(getUserSelectedInst());
+
+    playDrone(theInstrument);
+}
+
+function playDrone(aInst)
+{
+    let t = audioCtx.currentTime;
+    aInst.setFrequencyAtTime(A3, t)
+
+    aInst.connect(audioCtx.destination);
+    aInst.start();
+    aInst.stop(t + 3);
+}
+
+function playScale(aInst)
+{
+    let t = audioCtx.currentTime;
+    aInst.setFrequencyAtTime(2 * A3, t);
+    aInst.setFrequencyAtTime(2 * B3, t + 0.5);
+    aInst.setFrequencyAtTime(2 * Db4, t + 0.75);
+    aInst.setFrequencyAtTime(2 * D4, t + 1);
+    aInst.setFrequencyAtTime(2 * E4, t + 1.25);
+    aInst.setFrequencyAtTime(2 * Gb4, t + 1.5);
+    aInst.setFrequencyAtTime(2 * Ab4, t + 1.75);
+    aInst.setFrequencyAtTime(2 * A4, t + 2);
+
+    aInst.setFrequencyAtTime(2 * Ab4, t + 2.5);
+    aInst.setFrequencyAtTime(2 * Gb4, t + 2.75);
+    aInst.setFrequencyAtTime(2 * E4, t + 3);
+    aInst.setFrequencyAtTime(2 * D4, t + 3.25);
+    aInst.setFrequencyAtTime(2 * Db4, t + 3.5);
+    aInst.setFrequencyAtTime(2 * B3, t + 3.75);
+    aInst.setFrequencyAtTime(2 * A3, t + 4);
+
+    aInst.connect(audioCtx.destination);
+    aInst.start();
+    aInst.stop(audioCtx.currentTime + 4.5);
+}
+
+function playLick(aInst)
+{
+    let t = audioCtx.currentTime;
+    aInst.setFrequencyAtTime(D4, t);
+    aInst.setFrequencyAtTime(E4, t + 0.35);
+    aInst.setFrequencyAtTime(F4, t + 0.5);
+    aInst.setFrequencyAtTime(G4, t + 0.85);
+    aInst.setFrequencyAtTime(D4, t + 1);
+    aInst.exponentialRampToFrequencyAtTime(E4, t + 1.35);
+    aInst.setFrequencyAtTime(E4, t + 1.35);
+    aInst.setFrequencyAtTime(C4, t + 1.5);
+    aInst.setFrequencyAtTime(D4, t + 1.85);
+
+    aInst.connect(audioCtx.destination);
+    aInst.start();
+    aInst.stop(audioCtx.currentTime + 2.25);
+}
+
+// Get a canvas defined with ID "oscilloscope"
+var canvas = document.getElementById("oscilloscope");
+var canvasCtx = canvas.getContext("2d");
+
+// draw an oscilloscope of the current audio source
+
+function draw() {
+    requestAnimationFrame(draw);
+
+    theInstrument.analyser.fftSize = 2048;
+    var bufferLength = theInstrument.analyser.frequencyBinCount;
+    var dataArray = new Uint8Array(bufferLength);
+    theInstrument.analyser.getByteTimeDomainData(dataArray);
+
+    canvasCtx.fillStyle = "#f8f9fa";
+    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+    canvasCtx.lineWidth = 2;
+    canvasCtx.strokeStyle = "#007bff";
+
+    canvasCtx.beginPath();
+
+    var sliceWidth = canvas.width * 1.0 / bufferLength;
+    var x = 0;
+
+    for (var i = 0; i < bufferLength; i++) {
+
+        var v = dataArray[i] / 128.0;
+        var y = v * canvas.height / 2;
+
+        if (i === 0) {
+            canvasCtx.moveTo(x, y);
+        } else {
+            canvasCtx.lineTo(x, y);
+        }
+
+        x += sliceWidth;
+    }
+
+    canvasCtx.lineTo(canvas.width, canvas.height / 2);
+    canvasCtx.stroke();
+}
+
+draw();
