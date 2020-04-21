@@ -8,8 +8,9 @@ const INST_TYPE =
     TRIANGLE: 2,
     SAWTOOTH: 3,
     CLARINET: 4,
-    FLUTE: 5,
-    OBOE: 6
+    BASS_CLARINET: 5,
+    FLUTE: 6,
+    OBOE: 7
 }
 
 function getAmplitudeFromDB(aDB)
@@ -24,6 +25,20 @@ const PARTIAL_PRESETS =
     TRIANGLE: [0.7],
     SAWTOOTH: [0.15],
     CLARINET: [
+        getAmplitudeFromDB(0),
+        getAmplitudeFromDB(-36),
+        getAmplitudeFromDB(-3.2),
+        getAmplitudeFromDB(-33),
+        getAmplitudeFromDB(-5),
+        getAmplitudeFromDB(-28),
+        getAmplitudeFromDB(-17),
+        getAmplitudeFromDB(-18.5),
+        getAmplitudeFromDB(-26.6),
+        getAmplitudeFromDB(-32.4),
+        getAmplitudeFromDB(-26.2),
+        getAmplitudeFromDB(-28),
+    ],
+    BASS_CLARINET: [ // these are currently the same as clarinet
         getAmplitudeFromDB(0),
         getAmplitudeFromDB(-36),
         getAmplitudeFromDB(-3.2),
@@ -97,6 +112,10 @@ class Instrument
             case INST_TYPE.CLARINET:
                 partialAmplitudes = PARTIAL_PRESETS.CLARINET;
                 octavePrefOffset = -1;
+                break;
+            case INST_TYPE.BASS_CLARINET:
+                partialAmplitudes = PARTIAL_PRESETS.BASS_CLARINET;
+                octavePrefOffset = -2;
                 break;
             case INST_TYPE.FLUTE:
                 partialAmplitudes = PARTIAL_PRESETS.FLUTE;
@@ -196,11 +215,14 @@ function getUserSelectedInst()
         case 'flute':
             selectedInst = INST_TYPE.FLUTE;
             break;
+        case 'oboe':
+            selectedInst = INST_TYPE.OBOE;
+            break;
         case 'clarinet':
             selectedInst = INST_TYPE.CLARINET;
             break;
-        case 'oboe':
-            selectedInst = INST_TYPE.OBOE;
+        case 'bassclarinet':
+            selectedInst = INST_TYPE.BASS_CLARINET;
             break;
         default:
             selectedInst = INST_TYPE.SINE;
