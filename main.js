@@ -12,7 +12,8 @@ const INST_TYPE =
     FLUTE: 6,
     OBOE: 7,
     BASSOON: 8,
-    ALTOSAX: 9
+    ALTOSAX: 9,
+    TRUMPET: 10
 }
 
 function getAmplitudeFromDB(aDB)
@@ -109,6 +110,20 @@ const PARTIAL_PRESETS =
         getAmplitudeFromDB(-23.8),
         getAmplitudeFromDB(-27),
         getAmplitudeFromDB(-26.4),
+    ],
+    TRUMPET: [
+        getAmplitudeFromDB(-17),
+        getAmplitudeFromDB(-8),
+        getAmplitudeFromDB(-6.7),
+        getAmplitudeFromDB(-1.5),
+        getAmplitudeFromDB(-1.9),
+        getAmplitudeFromDB(-0.2),
+        getAmplitudeFromDB(-4),
+        getAmplitudeFromDB(-5.4),
+        getAmplitudeFromDB(-6.6),
+        getAmplitudeFromDB(-12.8),
+        getAmplitudeFromDB(-14.5),
+        getAmplitudeFromDB(-14.7),
     ]
 }
 class Instrument
@@ -159,6 +174,10 @@ class Instrument
                 break;
             case INST_TYPE.ALTOSAX:
                 partialAmplitudes = PARTIAL_PRESETS.ALTOSAX;
+                octavePrefOffset = -1;
+                break;
+            case INST_TYPE.TRUMPET:
+                partialAmplitudes = PARTIAL_PRESETS.TRUMPET;
                 octavePrefOffset = -1;
                 break;
             // sine is the default type
@@ -267,6 +286,9 @@ function getUserSelectedInst()
             break;
         case 'altosax':
             selectedInst = INST_TYPE.ALTOSAX;
+            break;
+        case 'trumpet':
+            selectedInst = INST_TYPE.TRUMPET;
             break;
         default:
             selectedInst = INST_TYPE.SINE;
