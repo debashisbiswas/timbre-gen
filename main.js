@@ -17,7 +17,8 @@ const INST_TYPE =
     ALTOSAX: 9,
     TRUMPET: 10,
     HORN: 11,
-    TROMBONE: 12
+    TROMBONE: 12,
+    TUBA: 13
 }
 
 function getAmplitudeFromDB(aDB)
@@ -157,6 +158,20 @@ const PARTIAL_PRESETS =
         getAmplitudeFromDB(-7.49),
         getAmplitudeFromDB(-6.9),
     ],
+    TUBA: [
+        getAmplitudeFromDB(-24.4),
+        getAmplitudeFromDB(-13.1),
+        getAmplitudeFromDB(-9.8),
+        getAmplitudeFromDB(-7.4),
+        getAmplitudeFromDB(-3.8),
+        getAmplitudeFromDB(-0.7),
+        getAmplitudeFromDB(0),
+        getAmplitudeFromDB(-0.2),
+        getAmplitudeFromDB(-0.7),
+        getAmplitudeFromDB(-2.2),
+        getAmplitudeFromDB(-3.3),
+        getAmplitudeFromDB(-3),
+    ]
 }
 class Instrument
 {
@@ -220,6 +235,10 @@ class Instrument
             case INST_TYPE.TROMBONE:
                 partialAmplitudes = PARTIAL_PRESETS.TROMBONE;
                 octavePrefOffset = -2;
+                break;
+            case INST_TYPE.TUBA:
+                partialAmplitudes = PARTIAL_PRESETS.TUBA;
+                octavePrefOffset = -3;
                 break;
             // sine is the default type
             default:
@@ -342,6 +361,9 @@ function getUserSelectedInst()
         case 'trombone':
             selectedInst = INST_TYPE.TROMBONE;
             break;
+        case 'tuba':
+            selectedInst = INST_TYPE.TUBA;
+            break;
         default:
             selectedInst = INST_TYPE.SINE;
             break;
@@ -441,11 +463,11 @@ function draw()
     var dataArray = new Uint8Array(bufferLength);
     globalAnalyser.getByteTimeDomainData(dataArray);
 
-    canvasCtx.fillStyle = "#f8f9fa";
+    canvasCtx.fillStyle = "#eee";
     canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
     canvasCtx.lineWidth = 2;
-    canvasCtx.strokeStyle = "#007bff";
+    canvasCtx.strokeStyle = "#006f94";
 
     canvasCtx.beginPath();
 
