@@ -380,12 +380,20 @@ function clickLick()
     playLick(theInstrument);
 }
 
-function clickScale()
+function clickMajorScale()
 {
     theInstrument = new Instrument(getUserSelectedInst());
     // let instrument = new Instrument(getUserSelectedInst());
 
-    playScale(theInstrument);
+    playMajorScale(theInstrument);
+}
+
+function clickMinorScale()
+{
+    theInstrument = new Instrument(getUserSelectedInst());
+    // let instrument = new Instrument(getUserSelectedInst());
+
+    playMinorScale(theInstrument);
 }
 
 function clickDrone()
@@ -403,10 +411,10 @@ function playDrone(aInst)
 
     aInst.connect(globalAnalyser);
     aInst.start();
-    aInst.stop(t + 3);
+    aInst.stop(t + 2);
 }
 
-function playScale(aInst)
+function playMajorScale(aInst)
 {
     let t = audioCtx.currentTime;
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * A3, t);
@@ -423,6 +431,31 @@ function playScale(aInst)
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * E4, t + 3);
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * D4, t + 3.25);
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * Db4, t + 3.5);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * B3, t + 3.75);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * A3, t + 4);
+
+    aInst.connect(globalAnalyser);
+    aInst.start();
+    aInst.stop(audioCtx.currentTime + 4.5);
+}
+
+function playMinorScale(aInst)
+{
+    let t = audioCtx.currentTime;
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * A3, t);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * B3, t + 0.5);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * C4, t + 0.75);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * D4, t + 1);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * E4, t + 1.25);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * F4, t + 1.5);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * G4, t + 1.75);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * A4, t + 2);
+
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * G4, t + 2.5);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * F4, t + 2.75);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * E4, t + 3);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * D4, t + 3.25);
+    aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * C4, t + 3.5);
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * B3, t + 3.75);
     aInst.setFrequencyAtTime(Math.pow(2, aInst.octaveOffset + 1) * A3, t + 4);
 

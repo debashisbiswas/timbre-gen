@@ -43,7 +43,16 @@
                 </a>
                 (made available by the University of Iowa Electronic Music Studios).
                 Then, I reconstructed these sounds by adding sine waves together, generating each sine wave using the oscillators provided by the Web Audio API.
-                You can hear the results in the demo below.
+            </p>
+            <p>
+                The drones are the most convincing as they were built directly from the information I gathered from the original sounds.
+                The scales are less convincing, and this is partially because instrument timbre changes based on register. This is also because there is no
+                <a href="https://en.wikipedia.org/wiki/Envelope_(music)" target="_blank">
+                    ASDR envelope
+                </a>
+                - the sound only starts, sustains, and stops, but there is no defined attack or decay. In other words, the sound does not change over time, which is an important part of timbre.
+                The lick is less related to the results, but does it show that melodies and ornamentation can be implemented in the Web Audio API.
+                However, this is not very efficient, as frequency and time data must be specified for each note. You can hear the results in the demo below.
             </p>
 
             <hr class="my-4">
@@ -83,8 +92,13 @@
                         </button>
                     </div>
                     <div class="col-8 col-md-3 mb-3">
-                        <button class="btn btn-primary btn-lg btn-block" onclick="clickScale()">
-                            Scale
+                        <button class="btn btn-primary btn-lg btn-block" onclick="clickMajorScale()">
+                            Major Scale
+                        </button>
+                    </div>
+                    <div class="col-8 col-md-3 mb-3">
+                        <button class="btn btn-primary btn-lg btn-block" onclick="clickMinorScale()">
+                            Minor Scale
                         </button>
                     </div>
                     <div class="col-8 col-md-3 mb-3">
