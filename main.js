@@ -176,8 +176,8 @@ const PARTIAL_PRESETS =
 class Instrument
 {
     /**
-     * Given an array of overtone amplitudes, construct an additive
-     * synth for that overtone structure
+     * Using an array of amplitudes for each partial, construct an instrument
+     * using additive synthesis
      */
     constructor(aInstType)
     {
@@ -284,7 +284,8 @@ class Instrument
         this.partials.forEach(o => o.stop(time));
     }
 
-    setFrequencyAtTime(frequency, time) {
+    setFrequencyAtTime(frequency, time)
+    {
         this.partials.forEach((o, index) =>
         {
             o.frequency.setValueAtTime(frequency * (index + 1), time);
@@ -302,6 +303,54 @@ class Instrument
 
 let theInstrument = new Instrument();
 
+// draw an oscilloscope of the global analyser
+var canvas = document.getElementById("oscilloscope");
+var canvasCtx = canvas.getContext("2d");
+function draw()
+{
+    requestAnimationFrame(draw);
+
+    globalAnalyser.fftSize = 2048;
+    var bufferLength = globalAnalyser.frequencyBinCount;
+    var dataArray = new Uint8Array(bufferLength);
+    globalAnalyser.getByteTimeDomainData(dataArray);
+
+    canvasCtx.fillStyle = "#eee";
+    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+    canvasCtx.lineWidth = 2;
+    canvasCtx.strokeStyle = "#006f94";
+
+    canvasCtx.beginPath();
+
+    var sliceWidth = canvas.width * 1.0 / bufferLength;
+    var x = 0;
+
+    for (var i = 0; i < bufferLength; i++) {
+
+        var v = dataArray[i] / 128.0;
+        var y = v * canvas.height / 2;
+
+        if (i === 0) {
+            canvasCtx.moveTo(x, y);
+        } else {
+            canvasCtx.lineTo(x, y);
+        }
+
+        x += sliceWidth;
+    }
+
+    canvasCtx.lineTo(canvas.width, canvas.height / 2);
+    canvasCtx.stroke();
+}
+
+draw();
+
+
+// ----------------------------------------
+// ---------- INSTRUMENT ACTIONS ----------
+// ----------------------------------------
+
 const A4 = 440;
 
 const Ab4 = A4 * Math.pow(2, -1 / 12);
@@ -316,93 +365,6 @@ const C4 = A4 * Math.pow(2, -9 / 12);
 const B3 = A4 * Math.pow(2, -10 / 12);
 const Bb3 = A4 * Math.pow(2, -11 / 12);
 const A3 = A4 * Math.pow(2, -12 / 12);
-
-function getUserSelectedInst()
-{
-    let selectedInst = INST_TYPE.SINE;
-    switch($('#selectInst')[0].value.toLowerCase())
-    {
-        case 'sine':
-            selectedInst = INST_TYPE.SINE;
-            break;
-        case 'square':
-            selectedInst = INST_TYPE.SQUARE;
-            break;
-        case 'triangle':
-            selectedInst = INST_TYPE.TRIANGLE;
-            break;
-        case 'sawtooth':
-            selectedInst = INST_TYPE.SAWTOOTH;
-            break;
-        case 'flute':
-            selectedInst = INST_TYPE.FLUTE;
-            break;
-        case 'oboe':
-            selectedInst = INST_TYPE.OBOE;
-            break;
-        case 'clarinet':
-            selectedInst = INST_TYPE.CLARINET;
-            break;
-        case 'bassclarinet':
-            selectedInst = INST_TYPE.BASS_CLARINET;
-            break;
-        case 'bassoon':
-            selectedInst = INST_TYPE.BASSOON;
-            break;
-        case 'altosax':
-            selectedInst = INST_TYPE.ALTOSAX;
-            break;
-        case 'trumpet':
-            selectedInst = INST_TYPE.TRUMPET;
-            break;
-        case 'horn':
-            selectedInst = INST_TYPE.HORN;
-            break;
-        case 'trombone':
-            selectedInst = INST_TYPE.TROMBONE;
-            break;
-        case 'tuba':
-            selectedInst = INST_TYPE.TUBA;
-            break;
-        default:
-            selectedInst = INST_TYPE.SINE;
-            break;
-    }
-
-    return selectedInst;
-}
-
-function clickLick()
-{
-    theInstrument = new Instrument(getUserSelectedInst());
-    // let instrument = new Instrument(getUserSelectedInst());
-
-    playLick(theInstrument);
-}
-
-function clickMajorScale()
-{
-    theInstrument = new Instrument(getUserSelectedInst());
-    // let instrument = new Instrument(getUserSelectedInst());
-
-    playMajorScale(theInstrument);
-}
-
-function clickMinorScale()
-{
-    theInstrument = new Instrument(getUserSelectedInst());
-    // let instrument = new Instrument(getUserSelectedInst());
-
-    playMinorScale(theInstrument);
-}
-
-function clickDrone()
-{
-    theInstrument = new Instrument(getUserSelectedInst());
-    // let instrument = new Instrument(getUserSelectedInst());
-
-    playDrone(theInstrument);
-}
 
 function playDrone(aInst)
 {
@@ -482,47 +444,86 @@ function playLick(aInst)
     aInst.stop(audioCtx.currentTime + 2.25);
 }
 
-// Get a canvas defined with ID "oscilloscope"
-var canvas = document.getElementById("oscilloscope");
-var canvasCtx = canvas.getContext("2d");
 
-// draw an oscilloscope of the current audio source
-function draw()
+// ------------------------------------
+// ---------- EVENT HANDLERS ----------
+// ------------------------------------
+
+function getUserSelectedInst()
 {
-    requestAnimationFrame(draw);
-
-    globalAnalyser.fftSize = 2048;
-    var bufferLength = globalAnalyser.frequencyBinCount;
-    var dataArray = new Uint8Array(bufferLength);
-    globalAnalyser.getByteTimeDomainData(dataArray);
-
-    canvasCtx.fillStyle = "#eee";
-    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-    canvasCtx.lineWidth = 2;
-    canvasCtx.strokeStyle = "#006f94";
-
-    canvasCtx.beginPath();
-
-    var sliceWidth = canvas.width * 1.0 / bufferLength;
-    var x = 0;
-
-    for (var i = 0; i < bufferLength; i++) {
-
-        var v = dataArray[i] / 128.0;
-        var y = v * canvas.height / 2;
-
-        if (i === 0) {
-            canvasCtx.moveTo(x, y);
-        } else {
-            canvasCtx.lineTo(x, y);
-        }
-
-        x += sliceWidth;
+    let selectedInst = INST_TYPE.SINE;
+    switch($('#selectInst')[0].value.toLowerCase())
+    {
+        case 'sine':
+            selectedInst = INST_TYPE.SINE;
+            break;
+        case 'square':
+            selectedInst = INST_TYPE.SQUARE;
+            break;
+        case 'triangle':
+            selectedInst = INST_TYPE.TRIANGLE;
+            break;
+        case 'sawtooth':
+            selectedInst = INST_TYPE.SAWTOOTH;
+            break;
+        case 'flute':
+            selectedInst = INST_TYPE.FLUTE;
+            break;
+        case 'oboe':
+            selectedInst = INST_TYPE.OBOE;
+            break;
+        case 'clarinet':
+            selectedInst = INST_TYPE.CLARINET;
+            break;
+        case 'bassclarinet':
+            selectedInst = INST_TYPE.BASS_CLARINET;
+            break;
+        case 'bassoon':
+            selectedInst = INST_TYPE.BASSOON;
+            break;
+        case 'altosax':
+            selectedInst = INST_TYPE.ALTOSAX;
+            break;
+        case 'trumpet':
+            selectedInst = INST_TYPE.TRUMPET;
+            break;
+        case 'horn':
+            selectedInst = INST_TYPE.HORN;
+            break;
+        case 'trombone':
+            selectedInst = INST_TYPE.TROMBONE;
+            break;
+        case 'tuba':
+            selectedInst = INST_TYPE.TUBA;
+            break;
+        default:
+            selectedInst = INST_TYPE.SINE;
+            break;
     }
 
-    canvasCtx.lineTo(canvas.width, canvas.height / 2);
-    canvasCtx.stroke();
+    return selectedInst;
 }
 
-draw();
+function clickDrone()
+{
+    theInstrument = new Instrument(getUserSelectedInst());
+    playDrone(theInstrument);
+}
+
+function clickMajorScale()
+{
+    theInstrument = new Instrument(getUserSelectedInst());
+    playMajorScale(theInstrument);
+}
+
+function clickMinorScale()
+{
+    theInstrument = new Instrument(getUserSelectedInst());
+    playMinorScale(theInstrument);
+}
+
+function clickLick()
+{
+    theInstrument = new Instrument(getUserSelectedInst());
+    playLick(theInstrument);
+}
